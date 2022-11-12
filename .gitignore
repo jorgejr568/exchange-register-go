@@ -1,0 +1,12 @@
+# binaries
+main
+exchange-register-go
+
+# misc
+.vscode
+.idea
+
+# env
+.env
+.env.local
+.env.production
