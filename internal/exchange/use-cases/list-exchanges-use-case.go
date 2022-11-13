@@ -17,11 +17,17 @@ func (s *listExchangesUseCase) Execute(ctx context.Context, req entity.ListExcha
 
 	exchangesResponse := make(entity.ListExchangesResponse, len(exchanges))
 	for i, exchange := range exchanges {
+		lastAcquisition := exchange.CreatedAt
+		if exchange.UpdatedAt != nil {
+			lastAcquisition = *exchange.UpdatedAt
+		}
+
 		exchangesResponse[i] = entity.ExchangeResponse{
-			ID:             exchange.ID,
-			SourceCurrency: exchange.BaseCurrency,
-			TargetCurrency: exchange.TargetCurrency,
-			Rate:           exchange.Rate,
+			ID:              exchange.ID,
+			SourceCurrency:  exchange.BaseCurrency,
+			TargetCurrency:  exchange.TargetCurrency,
+			Rate:            exchange.Rate,
+			LastAcquisition: lastAcquisition,
 		}
 	}
 
