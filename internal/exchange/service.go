@@ -52,6 +52,43 @@ func (k ksqlExchangeService) ReceiveExchangeRate(ctx context.Context, sourceCurr
 	return nil
 }
 
+func (k ksqlExchangeService) ListExchanges(ctx context.Context, sourceCurrency, targetCurrency string) ([]entity.Exchange, error) {
+	var exchangeRate []entity.Exchange
+	if sourceCurrency == "" && targetCurrency == "" {
+		err := k.db.Query(ctx, &exchangeRate, `SELECT * FROM exchanges`)
+		if err != nil {
+			return nil, err
+		}
+
+		return exchangeRate, nil
+	}
+
+	if sourceCurrency != "" && targetCurrency == "" {
+		err := k.db.Query(ctx, &exchangeRate, `SELECT * FROM exchanges WHERE base_currency = $1`, sourceCurrency)
+		if err != nil {
+			return nil, err
+		}
+
+		return exchangeRate, nil
+	}
+
+	if sourceCurrency == "" && targetCurrency != "" {
+		err := k.db.Query(ctx, &exchangeRate, `SELECT * FROM exchanges WHERE target_currency = $1`, targetCurrency)
+		if err != nil {
+			return nil, err
+		}
+
+		return exchangeRate, nil
+	}
+
+	err := k.db.Query(ctx, &exchangeRate, `SELECT * FROM exchanges WHERE base_currency = $1 AND target_currency = $2`, sourceCurrency, targetCurrency)
+	if err != nil {
+		return nil, err
+	}
+
+	return exchangeRate, nil
+}
+
 func (k ksqlExchangeService) createExchangeRate(ctx context.Context, id uint64, rate float64) error {
 	_, err := k.db.Exec(ctx, `INSERT INTO exchange_rates (exchange_id, rate) VALUES ($1, $2)`, id, rate)
 	if err != nil {

@@ -11,4 +11,5 @@ FROM alpine:3.16
 WORKDIR /app
 COPY --from=builder /build/exchange.bin .
 
-CMD ["./exchange.bin", "sync"]
+EXPOSE 8080
+CMD ["./exchange.bin", "service", "--sync", "--port", "8080"]

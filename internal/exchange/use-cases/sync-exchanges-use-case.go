@@ -1,4 +1,4 @@
-package exchange
+package use_cases
 
 import (
 	"context"
@@ -11,7 +11,7 @@ type syncExchangeRateUseCase struct {
 	exchangeRateClient exchangerate.Client
 }
 
-func (s *syncExchangeRateUseCase) Execute(ctx context.Context, req entity.GetExchangeRateRequest) (*entity.GetExchangeRateResponse, error) {
+func (s *syncExchangeRateUseCase) Execute(ctx context.Context, req entity.SyncExchangeRateRequest) (*entity.SyncExchangeRateResponse, error) {
 	resp, err := s.exchangeRateClient.GetExchangeRate(ctx, exchangerate.GetExchangeRateRequest{
 		From: req.SourceCurrency,
 		To:   req.TargetCurrency,
@@ -25,7 +25,7 @@ func (s *syncExchangeRateUseCase) Execute(ctx context.Context, req entity.GetExc
 		return nil, err
 	}
 
-	return &entity.GetExchangeRateResponse{
+	return &entity.SyncExchangeRateResponse{
 		Rate: resp.Rate,
 	}, nil
 }

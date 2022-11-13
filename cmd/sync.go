@@ -6,6 +6,7 @@ import (
 	"github.com/jorgejr568/exchange-register-go/internal/exchange"
 	"github.com/jorgejr568/exchange-register-go/internal/exchange/clients/exchangerate"
 	"github.com/jorgejr568/exchange-register-go/internal/exchange/entity"
+	"github.com/jorgejr568/exchange-register-go/internal/exchange/use-cases"
 	"github.com/jorgejr568/exchange-register-go/internal/infra"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -38,7 +39,7 @@ var syncCmd = &cobra.Command{
 		currenciesFrom := cfg.Env().CurrenciesFrom()
 		currenciesTo := cfg.Env().CurrenciesTo()
 
-		useCase := exchange.NewSyncExchangeRateUseCase(
+		useCase := use_cases.NewSyncExchangeRateUseCase(
 			exchangeService,
 			exchangeRateClient,
 		)
@@ -69,7 +70,7 @@ var syncCmd = &cobra.Command{
 							continue
 						}
 
-						_, err := useCase.Execute(ctx, entity.GetExchangeRateRequest{
+						_, err := useCase.Execute(ctx, entity.SyncExchangeRateRequest{
 							SourceCurrency: from,
 							TargetCurrency: to,
 						})
