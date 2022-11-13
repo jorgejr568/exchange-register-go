@@ -3,8 +3,10 @@ version: "3"
 services:
   app:
     build:
-        context: .
-        dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile
     restart: always
     env_file:
       - .env
+    extra_hosts:
+      - "db:host-gateway"
