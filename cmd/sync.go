@@ -34,16 +34,14 @@ var syncCmd = &cobra.Command{
 			cfg.Env().FreeCurrencyAPIClient(),
 		)
 
-		currenciesFrom := cfg.Env().CurrenciesFrom()
-		currenciesTo := cfg.Env().CurrenciesTo()
-
 		useCase := use_cases.NewSyncExchangeRateUseCase(
 			exchangeService,
 			exchangeRateClient,
 		)
-
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
+
+		runSync(ctx, useCase)
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, os.Interrupt)
 		go func() {
@@ -62,24 +60,30 @@ var syncCmd = &cobra.Command{
 				}
 				return
 			case <-time.After(cfg.Env().EXCHANGE_SYNC_SLEEP):
-				for _, from := range currenciesFrom {
-					for _, to := range currenciesTo {
-						if from == to {
-							continue
-						}
-
-						_, err := useCase.Execute(ctx, entity.SyncExchangeRateRequest{
-							SourceCurrency: from,
-							TargetCurrency: to,
-						})
-						if err != nil {
-							log.Error().Err(err).Msg("failed to sync exchange rate")
-						}
-					}
-				}
+				runSync(ctx, useCase)
 			}
 		}
 	},
+}
+
+func runSync(ctx context.Context, useCase entity.SyncExchangeRateUseCase) {
+	currenciesFrom := cfg.Env().CurrenciesFrom()
+	currenciesTo := cfg.Env().CurrenciesTo()
+	for _, from := range currenciesFrom {
+		for _, to := range currenciesTo {
+			if from == to {
+				continue
+			}
+
+			_, err := useCase.Execute(ctx, entity.SyncExchangeRateRequest{
+				SourceCurrency: from,
+				TargetCurrency: to,
+			})
+			if err != nil {
+				log.Error().Err(err).Msg("failed to sync exchange rate")
+			}
+		}
+	}
 }
 
 func init() {

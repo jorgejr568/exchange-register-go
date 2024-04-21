@@ -21,14 +21,14 @@ func (k ksqlExchangeService) ReceiveExchangeRate(ctx context.Context, sourceCurr
 				log.Error().Err(err).Msg("failed to create exchange")
 				return err
 			}
-			log.Debug().Msgf("created exchange with id %d", createdID)
+			log.Debug().Msgf("created exchange with %s-%s with id %d", sourceCurrency, targetCurrency, createdID)
 			err = k.createExchangeRate(ctx, createdID, rate)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to create exchange rate")
 				return err
 			}
 
-			log.Debug().Msgf("created exchange rate for exchange with id %d", createdID)
+			log.Debug().Msgf("created exchange rate for exchange %s-%s: %f", sourceCurrency, targetCurrency, rate)
 			return nil
 		}
 
@@ -37,18 +37,18 @@ func (k ksqlExchangeService) ReceiveExchangeRate(ctx context.Context, sourceCurr
 
 	err = k.updateExchange(ctx, exchange.ID, rate)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed to update exchange with id %d", exchange.ID)
+		log.Error().Err(err).Msgf("failed to update exchange %s-%s", sourceCurrency, targetCurrency)
 		return err
 	}
-	log.Debug().Msgf("updated exchange with id %d", exchange.ID)
 
+	log.Debug().Msgf("updated exchange with id %s-%s: %f", sourceCurrency, targetCurrency, rate)
 	err = k.createExchangeRate(ctx, exchange.ID, rate)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed to create exchange rate for exchange with id %d", exchange.ID)
+		log.Error().Err(err).Msgf("failed to create exchange rate for exchange with id %s-%s", sourceCurrency, targetCurrency)
 		return err
 	}
-	log.Debug().Msgf("created exchange rate for exchange with id %d", exchange.ID)
 
+	log.Debug().Msgf("created exchange rate for exchange %s-%s: %f", sourceCurrency, targetCurrency, rate)
 	return nil
 }
 
