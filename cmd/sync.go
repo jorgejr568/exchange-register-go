@@ -10,7 +10,6 @@ import (
 	"github.com/jorgejr568/exchange-register-go/internal/infra"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"net/http"
 	"os"
 	"os/signal"
 	"time"
@@ -31,9 +30,8 @@ var syncCmd = &cobra.Command{
 		exchangeService := exchange.NewKSQLExchangeService(
 			db,
 		)
-		exchangeRateClient := exchangerate.NewHTTPClient(
-			http.DefaultClient,
-			cfg.Env().EXCHANGE_RATE_API_URL,
+		exchangeRateClient := exchangerate.NewFreeCurrencyApiClient(
+			cfg.Env().FreeCurrencyAPIClient(),
 		)
 
 		currenciesFrom := cfg.Env().CurrenciesFrom()
