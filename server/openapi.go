@@ -1,10 +1,11 @@
 package server
 
 import (
+	"net/http"
+
 	"github.com/jorgejr568/exchange-register-go/internal/exchange/entity"
 	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi3"
-	"net/http"
 )
 
 // StatusResponse represents the health check response
@@ -24,7 +25,7 @@ type ErrorResponse struct {
 }
 
 // GenerateOpenAPISpec creates the OpenAPI 3.0 specification for the API
-func GenerateOpenAPISpec() (*openapi3.Spec, error) {
+func GenerateOpenAPISpec(serverURL string) (*openapi3.Spec, error) {
 	reflector := openapi3.Reflector{}
 	reflector.Spec = &openapi3.Spec{Openapi: "3.0.3"}
 	reflector.Spec.Info.
@@ -35,8 +36,8 @@ func GenerateOpenAPISpec() (*openapi3.Spec, error) {
 	// Add server
 	reflector.Spec.Servers = []openapi3.Server{
 		{
-			URL:         "http://localhost:8080",
-			Description: stringPtr("Development server"),
+			URL:         serverURL,
+			Description: stringPtr("Production server"),
 		},
 	}
 

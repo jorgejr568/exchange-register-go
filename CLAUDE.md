@@ -28,7 +28,9 @@ This project follows a Clean Architecture pattern with clear separation of conce
 
 - **server/**: HTTP server implementation
   - Echo framework v4 for REST API
-  - Endpoints: `/status`, `/exchanges`
+  - Endpoints: `/status`, `/exchanges`, `/openapi.json`, `/docs`
+  - OpenAPI spec generation using swaggest/openapi-go
+  - Interactive API documentation via Scalar
 
 - **cfg/**: Configuration management
   - Environment variables loaded via godotenv and go-env
@@ -131,6 +133,18 @@ Health check endpoint returning `{"status": "ok"}`
 List exchange rates with optional filters:
 - Query params: `?source=USD&target=BRL` (both optional)
 - Returns array of exchange rate objects with current rate and last acquisition time
+
+### GET /openapi.json
+OpenAPI 3.0.3 specification endpoint:
+- Dynamically generates OpenAPI spec using swaggest/openapi-go
+- Includes all API endpoints with request/response schemas
+- Used by documentation tools and API clients
+
+### GET /docs
+Interactive API documentation powered by Scalar:
+- Modern, user-friendly API documentation interface
+- Loads OpenAPI specification from `/openapi.json`
+- Provides request examples, response schemas, and interactive testing
 
 ## Key Implementation Details
 

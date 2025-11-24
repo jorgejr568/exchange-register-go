@@ -10,6 +10,7 @@ RUN go build -o exchange.bin
 FROM alpine:3.16
 WORKDIR /app
 COPY --from=builder /build/exchange.bin .
+COPY --from=builder /build/server/static /app/static
 
 EXPOSE 8080
 CMD ["./exchange.bin", "service", "--sync", "--port", "8080"]

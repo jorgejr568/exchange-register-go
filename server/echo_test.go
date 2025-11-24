@@ -4,16 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
 	"github.com/jorgejr568/exchange-register-go/internal/exchange/entity"
 	"github.com/jorgejr568/exchange-register-go/internal/exchange/entity/mocks"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-	"time"
 )
 
 func TestStatusEndpoint_Success(t *testing.T) {
@@ -237,7 +238,7 @@ func TestOpenAPIEndpoint_Success(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	handler := func(c echo.Context) error {
-		spec, err := GenerateOpenAPISpec()
+		spec, err := GenerateOpenAPISpec("http://localhost:8080")
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]string{
 				"error": "failed to generate openapi spec",
@@ -272,26 +273,102 @@ func TestOpenAPIEndpoint_Success(t *testing.T) {
 	_ = mockUseCase // Avoid unused variable warning
 }
 
-// Helper method to extract handler functions from the server
-func (s *echoServer) statusHandler(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]string{
-		"status": "ok",
-	})
-}
-
-func (s *echoServer) exchangesHandler(c echo.Context) error {
-	ctx := c.Request().Context()
-	req := entity.ListExchangesRequest{
-		SourceCurrency: c.QueryParam("source"),
-		TargetCurrency: c.QueryParam("target"),
+func TestGetServerURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		scheme   string
+		host     string
+		expected string
+	}{
+		{
+			name:     "HTTP with standard port",
+			scheme:   "http",
+			host:     "localhost:80",
+			expected: "http://localhost",
+		},
+		{
+			name:     "HTTPS with standard port",
+			scheme:   "https",
+			host:     "example.com:443",
+			expected: "https://example.com",
+		},
+		{
+			name:     "HTTP with custom port",
+			scheme:   "http",
+			host:     "localhost:8080",
+			expected: "http://localhost:8080",
+		},
+		{
+			name:     "HTTPS with custom port",
+			scheme:   "https",
+			host:     "example.com:8443",
+			expected: "https://example.com:8443",
+		},
+		{
+			name:     "HTTP without port",
+			scheme:   "http",
+			host:     "localhost",
+			expected: "http://localhost",
+		},
+		{
+			name:     "HTTPS without port",
+			scheme:   "https",
+			host:     "example.com",
+			expected: "https://example.com",
+		},
+		{
+			name:     "Empty host falls back to localhost",
+			scheme:   "http",
+			host:     "",
+			expected: "http://localhost",
+		},
 	}
 
-	res, err := s.listExchangesUseCase.Execute(ctx, req)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "failed to list exchanges",
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.Host = tt.host
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			// Set scheme header for HTTPS tests
+			if tt.scheme == "https" {
+				req.Header.Set("X-Forwarded-Proto", "https")
+			}
+
+			// Act
+			result := getServerURL(c)
+
+			// Assert
+			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
 
-	return c.JSON(http.StatusOK, res)
+func TestDocsEndpoint_Success(t *testing.T) {
+	// Arrange
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUseCase := mocks.NewMockListExchangesUseCase(ctrl)
+	e := echo.New()
+	server := NewEchoServer(mockUseCase, "8080").(*echoServer)
+
+	req := httptest.NewRequest(http.MethodGet, "/docs", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	// Act
+	err := server.docsHandler(c)
+
+	// Assert
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Contains(t, rec.Body.String(), "Scalar API Reference")
+	assert.Contains(t, rec.Body.String(), "data-url=\"/openapi.json\"")
+	assert.Contains(t, rec.Body.String(), "@scalar/api-reference")
+
+	_ = mockUseCase // Avoid unused variable warning
 }
