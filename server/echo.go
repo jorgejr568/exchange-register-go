@@ -45,6 +45,18 @@ func (s *echoServer) GracefulListenAndShutdown(ctx context.Context) error {
 		return c.JSON(http.StatusOK, res)
 	})
 
+	e.GET("/openapi.json", func(c echo.Context) error {
+		spec, err := GenerateOpenAPISpec()
+		if err != nil {
+			log.Error().Err(err).Msg("failed to generate openapi spec")
+			return c.JSON(http.StatusInternalServerError, map[string]string{
+				"error": "failed to generate openapi spec",
+			})
+		}
+
+		return c.JSON(http.StatusOK, spec)
+	})
+
 	go func() {
 		<-ctx.Done()
 		err := e.Close()
