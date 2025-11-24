@@ -1,5 +1,7 @@
 package entity
 
+//go:generate mockgen -destination=mocks/mock_use_case.go -package=mocks github.com/jorgejr568/exchange-register-go/internal/exchange/entity SyncExchangeRateUseCase,ListExchangesUseCase,ExchangeService
+
 import "context"
 
 type SyncExchangeRateRequest struct {

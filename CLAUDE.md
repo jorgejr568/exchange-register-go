@@ -85,6 +85,31 @@ go run main.go sync
 docker build -t exchange-register-go .
 ```
 
+### Testing
+
+The project uses a Makefile for common tasks. See `TESTING.md` for detailed testing guide.
+
+Run unit tests:
+```bash
+make test
+```
+
+Run tests with coverage:
+```bash
+make test-coverage
+```
+
+Generate mocks (uses mockgen):
+```bash
+make mocks
+```
+
+Run integration tests (requires database):
+```bash
+make docker-up
+make test-integration
+```
+
 ## Environment Variables
 
 Required variables (see `.env.example`):
@@ -115,6 +140,41 @@ List exchange rates with optional filters:
 - **Graceful Shutdown**: Both HTTP server and sync worker handle context cancellation for clean shutdown
 - **Context Propagation**: Request context flows through all layers (HTTP → Use Case → Service → DB)
 
+## Testing Architecture
+
+The project has comprehensive test coverage with unit tests and integration tests:
+
+- **Unit Tests**: Mock-based tests for isolated components
+  - Use cases (`internal/exchange/use-cases/*_test.go`): Test business logic with mocked dependencies
+  - Service layer (`internal/exchange/service_test.go`): Test repository patterns with mocked database
+  - HTTP endpoints (`server/echo_test.go`): Test request/response handling with mocked use cases
+
+- **Integration Tests**: Real database tests with PostgreSQL
+  - Service integration (`internal/exchange/service_integration_test.go`): Full CRUD workflows with actual database
+  - Requires `integration` build tag and test database setup
+  - Tests exchange creation, updates, filtering, and historical rate tracking
+
+- **Mock Generation**: Uses mockgen for automatic mock generation
+  - Mocks are generated from `//go:generate` directives in interface files
+  - Run `make mocks` or `go generate ./...` to regenerate
+  - Located in `*/mocks/` directories:
+    - `entity/mocks/mock_use_case.go`: Exchange service and use case mocks
+    - `clients/exchangerate/mocks/mock_client.go`: External API client mocks
+    - `infra/mocks/mock_db.go`: Database interface mocks
+
+- **Testing Tools**:
+  - gomock: Mock generation and expectations (go.uber.org/mock)
+  - testify/assert: Assertions
+  - testify/require: Required assertions that stop test on failure
+
+- **Makefile Commands**:
+  - `make test`: Run all unit tests
+  - `make test-coverage`: Generate coverage report
+  - `make mocks`: Regenerate all mocks
+  - `make test-integration`: Run integration tests
+
+See `TESTING.md` for detailed testing guide including mock generation, coverage reports, and CI setup.
+
 ## External Dependencies
 
 - **FreeCurrency API**: External exchange rate provider (github.com/jorgejr568/freecurrencyapi-go/v2)
@@ -122,3 +182,6 @@ List exchange rates with optional filters:
 - **Echo**: Web framework for HTTP server
 - **Cobra**: CLI command framework
 - **Zerolog**: Structured logging
+- **Testify**: Testing toolkit for assertions
+- **gomock**: Mock generation and testing framework (go.uber.org/mock)
+- **mockgen**: Tool for generating mock implementations from interfaces

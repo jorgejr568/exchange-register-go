@@ -1,5 +1,7 @@
 package infra
 
+//go:generate mockgen -destination=mocks/mock_db.go -package=mocks github.com/jorgejr568/exchange-register-go/internal/infra DB
+
 import (
 	"context"
 	"database/sql"
